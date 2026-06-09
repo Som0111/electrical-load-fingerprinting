@@ -220,9 +220,10 @@ Core packages:
 
 ## About
 
-Built by **Soumya** — 3rd year Electrical Engineering, NIT Rourkela.
+Built by **Soumya Swarup Padhi** 
+3rd year Electrical Engineering, NIT Rourkela.
 
 Combining signal processing knowledge from EE coursework with ML to solve a real power systems problem.
 
-LinkedIn: *[your link]*  
+LinkedIn: https://www.linkedin.com/in/soumya-swarup-padhi-91ab90414/
 GitHub: https://github.com/Som0111/electrical-load-fingerprinting
