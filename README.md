@@ -30,28 +30,32 @@ This project is my attempt to answer that.
 
 ## Dataset
 
-**REDD — Reference Energy Disaggregation Dataset**
-MIT CSAIL, 2011. Freely available at: http://redd.csail.mit.edu/
+**REFIT — Household Electricity Dataset**
 
-- 6 homes, several weeks of data each
-- High-frequency (15kHz) current + voltage at the mains
-- Individual appliance-level ground truth via sub-metering
-- We use House 1 low-frequency data (1Hz sampling) for this project
+For this project, I use House 1 low-frequency data from the REFIT dataset.
+
+- UK residential electricity consumption dataset
+- Aggregate mains power along with appliance-level sub-meter readings
+- 1 Hz sampling rate
+- Multiple monitored household appliances
+- Appliance-level ground truth available through sub-metering
 
 **What each row contains:**
 - Unix timestamp
 - Aggregate power reading (watts)
 - Individual appliance power readings (ground truth labels)
 
+The project uses a cleaned REFIT House 1 CSV containing aggregate mains power and appliance-level measurements.
+
 ---
 
 ## Project Structure
 
-```
+```text
 load-fingerprinting/
 │
 ├── data/
-│   ├── raw/                      # Downloaded REDD files go here
+│   ├── raw/                      # Downloaded REFIT files go here
 │   └── processed/                # Cleaned, feature-engineered CSVs
 │
 ├── notebooks/
@@ -74,10 +78,13 @@ load-fingerprinting/
 ## Approach — Step by Step
 
 ### Step 1: Understand the raw signal
+
 Plot aggregate power over time. Visually identify when appliances switch ON/OFF. Get comfortable with the data before touching any ML.
 
 ### Step 2: Signal-level analysis
+
 For each appliance, study its individual power trace:
+
 - What does its steady-state wattage look like?
 - How sharp or gradual is its ON transition?
 - Does it have periodic behavior (compressor cycling)?
@@ -86,107 +93,135 @@ For each appliance, study its individual power trace:
 This is where EE knowledge directly applies. A pure CS student would skip this step. You shouldn't.
 
 ### Step 3: Event detection
+
 Detect state-change events in the aggregate signal using edge detection on the power trace — essentially finding significant step-changes (ΔP > threshold). Each detected event is a candidate appliance switching ON or OFF.
 
 ### Step 4: Feature engineering
+
 For each detected event, extract features:
-- `delta_power`: magnitude of the step change
-- `steady_state_mean`: average power in the 30s window after event
-- `steady_state_std`: how stable is the load?
-- `rise_time`: how quickly did power reach steady state?
-- `on_duration`: how long did this event last?
-- `time_of_day`: hour of day (appliance usage has temporal patterns)
-- `power_level_before`: context — what was running before this event?
+
+- `delta_power`: magnitude of the power change
+- `delta_power_abs`: absolute magnitude of the power change
+- `power_before_mean`: average power before the event
+- `power_before_std`: variation before the event
+- `steady_state_mean`: average power after the event
+- `steady_state_std`: stability after the event
+- `steady_state_max`: peak power after the event
+- `steady_state_min`: minimum power after the event
+- `rise_time_seconds`: how quickly did power reach steady state?
+- `time_of_day_hour`: hour of day
+- `is_nighttime`: nighttime usage indicator
+- `direction`: ON/OFF event indicator
 
 ### Step 5: Train classifiers
+
 Label each event with its appliance (from ground truth). Train:
+
 - Logistic Regression (baseline)
 - Decision Tree (interpretable)
 - Random Forest (best performer)
 
-Evaluate per-appliance F1 score — accuracy alone is misleading with class imbalance.
+Evaluate per-appliance F1 score. Accuracy alone is not enough to judge multi-class appliance classification.
 
 ---
 
 ## Key Results
 
-| Appliance | Precision | Recall | F1 |
-|---|---|---|---|
-| Refrigerator | ~0.81 | ~0.78 | ~0.79 |
-| Lighting | ~0.76 | ~0.72 | ~0.74 |
-| Washer/Dryer | ~0.89 | ~0.85 | ~0.87 |
-| Microwave | ~0.91 | ~0.88 | ~0.89 |
-| Overall (RF) | ~0.84 | ~0.81 | ~0.82 |
+| Model | Accuracy | Macro F1 |
+|--------|----------|----------|
+| Logistic Regression | 0.45 | 0.43 |
+| Decision Tree | 0.49 | 0.46 |
+| Random Forest | 0.59 | 0.56 |
 
-*(Exact numbers depend on your train/test split and REDD house used)*
+Additional observations:
+
+- Random Forest achieved the best overall performance.
+- Computer events were classified most reliably.
+- Fridge and Washer_Dryer events were more difficult to separate because of overlapping power signatures.
+- Feature importance analysis showed that steady-state power characteristics were the most informative predictors.
+- 5-fold cross-validation produced an average accuracy of approximately **0.64 ± 0.08**, indicating reasonable generalization across different train-test splits.
 
 ---
 
 ## What I found interesting
 
-- Microwave was the easiest to identify — very sharp ON transition, flat steady state, short duration
-- Refrigerator was hardest — compressor cycling creates variable power draw that overlaps with other loads
-- Time-of-day turned out to be a surprisingly strong feature (washing machines almost never run at 2am)
-- Rise time alone separated resistive loads (instant) from motor loads (gradual) very cleanly
+- Computer events were the easiest to identify because of their distinctive power signatures
+- Fridge and Washer_Dryer were harder to separate — overlapping power characteristics caused frequent confusion
+- Time-of-day turned out to be less important than the electrical features themselves
+- Steady-state power features contributed most to appliance classification
 
 ---
 
 ## What I'd do differently
 
-- Use high-frequency (15kHz) data for harmonic feature extraction — would dramatically improve accuracy
+- Use high-frequency data for harmonic feature extraction — would dramatically improve classification performance
 - Try a Hidden Markov Model approach — NILM researchers use these for state-based appliance modeling
-- Apply to Indian household data — REDD is US-based, Indian load profiles are quite different
+- Apply to Indian household data — load profiles can differ significantly from REFIT
 
 ---
 
 ## How to Run
 
-### 1. Download the dataset
-Go to http://redd.csail.mit.edu/ and request access (free, academic use).
-Download `low_freq.tar.gz`, extract into `data/raw/`.
+### 1. Prepare the dataset
 
-Expected structure:
-```
-data/raw/house_1/
-    channel_1.dat   # mains aggregate
-    channel_2.dat   # mains aggregate (2nd phase)
-    channel_3.dat   # appliance 1
-    ...
-    labels.dat      # appliance names
+Place the cleaned REFIT House 1 CSV file inside:
+
+```text
+data/raw/
 ```
 
 ### 2. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 3. Run notebooks in order
+
 ```bash
 jupyter notebook
 ```
-Open: `01 → 02 → 03 → 04 → 05`
+
+Open:
+
+```text
+01_data_exploration.ipynb
+→ 02_signal_analysis.ipynb
+→ 03_event_detection.ipynb
+→ 04_feature_engineering.ipynb
+→ 05_modelling.ipynb
+```
 
 ---
 
 ## Requirements
 
-See `requirements.txt`. Core: `pandas`, `numpy`, `scikit-learn`, `matplotlib`, `seaborn`, `scipy`, `jupyter`
+See `requirements.txt`.
+
+Core packages:
+
+- pandas
+- numpy
+- scikit-learn
+- matplotlib
+- seaborn
+- scipy
+- jupyter
 
 ---
 
 ## References
 
-- Kolter & Johnson, "REDD: A Public Data Set for Energy Disaggregation Research", 2011
-- Hart, G.W., "Nonintrusive appliance load monitoring", Proceedings of the IEEE, 1992
+- Hart, G.W., "Nonintrusive Appliance Load Monitoring", Proceedings of the IEEE, 1992
 - Kelly & Knottenbelt, "Neural NILM", ACM BuildSys, 2015
-
-*(Adding references signals you actually read around the topic — most student projects have none)*
+- REFIT: Electrical Load Measurements for UK Homes
 
 ---
 
 ## About
 
-Built by **Soumya** — 3rd year Electrical Engineering, NIT Rourkela.  
+Built by **Soumya** — 3rd year Electrical Engineering, NIT Rourkela.
+
 Combining signal processing knowledge from EE coursework with ML to solve a real power systems problem.
 
 LinkedIn: *[your link]*  
