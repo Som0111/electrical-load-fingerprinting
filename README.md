@@ -226,4 +226,6 @@ Built by **Soumya Swarup Padhi**
 Combining signal processing knowledge from EE coursework with ML to solve a real power systems problem.
 
 LinkedIn: https://www.linkedin.com/in/soumya-swarup-padhi-91ab90414/
+
+
 GitHub: https://github.com/Som0111/electrical-load-fingerprinting
