@@ -225,4 +225,4 @@ Built by **Soumya** — 3rd year Electrical Engineering, NIT Rourkela.
 Combining signal processing knowledge from EE coursework with ML to solve a real power systems problem.
 
 LinkedIn: *[your link]*  
-GitHub: *[your link]*
+GitHub: https://github.com/Som0111/electrical-load-fingerprinting
