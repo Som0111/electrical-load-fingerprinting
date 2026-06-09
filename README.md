@@ -226,7 +226,7 @@ Built by **Soumya Swarup Padhi**
 Third-Year Electrical Engineering Student, NIT Rourkela
 
 
-Combining signal processing knowledge from EE coursework with ML to solve a real power systems problem.
+Combining signal processing knowledge from Electrical Engineering coursework with ML to solve real-world power systems problems.
 
 LinkedIn: https://www.linkedin.com/in/soumya-swarup-padhi-91ab90414/
 
