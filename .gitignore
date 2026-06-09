@@ -17,3 +17,6 @@ data/raw/
 *.dat
 
 data/processed/house1_7days.csv
+
+GIT_COMMIT_GUIDE.md
+LINKEDIN_POST_DRAFT.md
