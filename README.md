@@ -223,9 +223,8 @@ Core packages:
 Built by **Soumya Swarup Padhi** 
 
 
-3rd year Electrical Engineering,
+Third-Year Electrical Engineering Student, NIT Rourkela
 
-NIT Rourkela.
 
 Combining signal processing knowledge from EE coursework with ML to solve a real power systems problem.
 
